@@ -336,6 +336,108 @@ class TSPApp:
         """Решает TSP с использованием муравьиного алгоритма."""
         pass
 
+    def ant_colony_optimization(self, graph_data, use_modification):
+        """Муравьиный алгоритм для решения TSP."""
+        nodes = list(graph_data.keys())
+        if not nodes:
+            return None, float('inf')
+
+        num_ants = len(nodes)
+        num_iterations = 50
+        pheromone = self._initialize_pheromones(graph_data)
+
+        best_route = None
+        best_length = float('inf')
+
+        for _ in range(num_iterations):
+            all_routes, all_lengths = self._construct_routes(graph_data, pheromone, num_ants)
+            self._update_pheromones(pheromone, all_routes, all_lengths, use_modification)
+
+            # Обновление лучшего маршрута
+            for route, length in zip(all_routes, all_lengths):
+                if length < best_length:
+                    best_route = route
+                    best_length = length
+
+        return best_route, best_length
+
+    def _initialize_pheromones(self, graph_data):
+        """Инициализирует феромоны на всех рёбрах."""
+        pheromone = {}
+        for i in graph_data:
+            for j in graph_data[i]:
+                pheromone[(i, j)] = 1.0
+        return pheromone
+
+    def _construct_routes(self, graph_data, pheromone, num_ants):
+        """Строит маршруты для всех муравьёв."""
+        all_routes = []
+        all_lengths = []
+        nodes = list(graph_data.keys())
+
+        for _ in range(num_ants):
+            current_node = random.choice(nodes)
+            visited = [current_node]
+            length = 0
+
+            while len(visited) < len(nodes):
+                next_nodes = [j for j in graph_data[current_node] if j not in visited]
+                if not next_nodes:
+                    break
+
+                probabilities = []
+                total = 0.0
+                for j in next_nodes:
+                    tau = pheromone.get((current_node, j), 1e-6)
+                    eta = 1.0 / graph_data[current_node][j]
+                    prob = (tau ** self.alpha) * (eta ** self.beta)
+                    probabilities.append(prob)
+                    total += prob
+
+                if total == 0:
+                    next_node = random.choice(next_nodes)
+                else:
+                    probabilities = [p / total for p in probabilities]
+                    next_node = random.choices(next_nodes, weights=probabilities, k=1)[0]
+
+                length += graph_data[current_node][next_node]
+                visited.append(next_node)
+                current_node = next_node
+
+            # Проверка на полный маршрут
+            if len(visited) == len(nodes) and visited[0] in graph_data[visited[-1]]:
+                length += graph_data[visited[-1]][visited[0]]
+                visited.append(visited[0])
+                all_routes.append(visited)
+                all_lengths.append(length)
+
+        return all_routes, all_lengths
+    
+    def _update_pheromones(self, pheromone, all_routes, all_lengths, use_modification):
+        # Испарение
+        for edge in pheromone:
+            pheromone[edge] *= (1 - self.rho)
+
+        # Добавление феромона
+        edge_counts = {}
+        for route, length in zip(all_routes, all_lengths):
+            if length == 0:
+                continue
+            delta = self.Q / length
+            for i in range(len(route)-1):
+                edge = (route[i], route[i+1])
+                if edge in pheromone:
+                    pheromone[edge] += delta
+                    edge_counts[edge] = edge_counts.get(edge, 0) + 1
+
+        if use_modification:
+            pattern_memory = {}
+            for route in all_routes:
+                for i in range(len(route)-1):
+                    edge = (route[i], route[i+1])
+                    pattern_memory[edge] = pattern_memory.get(edge, 0) + 1
+            for edge, count in pattern_memory.items():
+                pheromone[edge] += 0.1 * self.Q * count
 
     def _save_result(self):
         if not self.optimal_route and "Маршрут не найден" in self.result_text:
