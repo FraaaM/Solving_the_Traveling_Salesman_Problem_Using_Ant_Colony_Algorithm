@@ -11,7 +11,7 @@ class TSPApp:
     NODE_SIZE = 12
     MIN_SPACING = 50
     SELECTION_RADIUS = 17
-    DEFAULT_PARAMS = {'alpha': 1.0, 'beta': 2.0, 'rho': 0.1, 'q': 100}
+    DEFAULT_PARAMS = {'alpha': 1.0, 'beta': 2.0, 'rho': 0.3, 'q': 100}
 
     def __init__(self, root):
         self.root = root
@@ -35,7 +35,7 @@ class TSPApp:
         self.beta = self.DEFAULT_PARAMS['beta']
         self.rho = self.DEFAULT_PARAMS['rho']
         self.Q = self.DEFAULT_PARAMS['q']
-        self.iterations = 50
+        self.iterations = 40
         self.ants = 20
         self.use_modification = tk.BooleanVar(value=True)
 
@@ -58,19 +58,19 @@ class TSPApp:
         top_right_frame = ttk.Frame(right_panel)
         top_right_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        params_frame = ttk.LabelFrame(top_right_frame, text="Algorithm Parameters")
+        params_frame = ttk.LabelFrame(top_right_frame, text="Параметры Алгоритма")
         params_frame.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
         
         self._create_param_entry(params_frame, "Alpha (влияние феромонов):", 'alpha', 0)
         self._create_param_entry(params_frame, "Beta (влияние расстояния):", 'beta', 1)
         self._create_param_entry(params_frame, "Rho (испарение):", 'rho', 2)
-        self._create_param_entry(params_frame, "Q (коэффициент):", 'Q', 3)
+        self._create_param_entry(params_frame, "Q (количество феромона):", 'Q', 3)
         self._create_param_entry(params_frame, "Итерации:", 'iterations', 4, int)
         self._create_param_entry(params_frame, "Муравьи:", 'ants', 5, int)
         
         ttk.Checkbutton(params_frame, text="Использовать модификацию", variable=self.use_modification).grid(row=6, column=0, sticky='w', pady=2)
 
-        edges_frame = ttk.LabelFrame(top_right_frame, text="Edges List")
+        edges_frame = ttk.LabelFrame(top_right_frame, text="Список Ребер")
         edges_frame.grid(row=0, column=1, sticky='nsew', padx=1, pady=1, ipadx=1, ipady=1)
         
         self.edge_table = ttk.Treeview(edges_frame, columns=("From", "To", "Cost"), show="headings", height=12)
